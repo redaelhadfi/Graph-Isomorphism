@@ -15,8 +15,8 @@ jobs:
 
     - name: Install MinGW and Dependencies
       run: |
-        choco install cmake mingw
-        refreshenv
+        choco install cmake mingw -y
+        $env:PATH="$env:PATH;C:\ProgramData\chocolatey\lib\mingw\tools\install\bin;C:\ProgramData\mingw64\mingw64\bin"
 
     - name: Download and Install FLTK
       run: |
@@ -31,7 +31,7 @@ jobs:
 
     - name: Configure Build
       run: |
-        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -Dfltk_DIR="C:/Program Files (x86)/FLTK" .
+        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release -Dfltk_DIR="C:/Program Files/FLTK" .
 
     - name: Build Project
       run: mingw32-make
