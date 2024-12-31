@@ -26,8 +26,7 @@ jobs:
         mingw32-make
 
     - name: Upload Executable
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3
       with:
         name: GraphIsomorphism
         path: ./GraphIsomorphism.exe
-
