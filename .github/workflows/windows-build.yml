@@ -15,7 +15,9 @@ jobs:
 
     - name: Install Dependencies
       run: |
-        choco install cmake mingw
+        choco install cmake mingw fltk
+        refreshenv
+        
 
     - name: Configure Build
       run: |
