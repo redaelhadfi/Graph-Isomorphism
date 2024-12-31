@@ -1,0 +1,33 @@
+name: Windows Build
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout Source Code
+      uses: actions/checkout@v2
+
+    - name: Install Dependencies
+      run: |
+        choco install cmake mingw
+
+    - name: Configure Build
+      run: |
+        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .
+
+    - name: Build Project
+      run: |
+        mingw32-make
+
+    - name: Upload Executable
+      uses: actions/upload-artifact@v2
+      with:
+        name: GraphIsomorphism
+        path: ./GraphIsomorphism.exe
+
