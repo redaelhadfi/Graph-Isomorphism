@@ -1,50 +1,40 @@
 name: Cross-Compile for Windows
 
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+on: [push, pull_request]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v3
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up CMake
+      uses: lukka/get-cmake@v3
 
     - name: Install MinGW
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64 cmake make
+      run: sudo apt-get install -y mingw-w64
 
     - name: Create toolchain file
       run: |
-        cat > windows-toolchain.cmake << 'EOF'
-        set(CMAKE_SYSTEM_NAME Windows)
-        set(CMAKE_SYSTEM_PROCESSOR x86_64)
-        set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
-        set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
-        set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
-        set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
-        set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-        EOF
+        echo 'set(CMAKE_SYSTEM_NAME Windows)' > toolchain.cmake
+        echo 'set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)' >> toolchain.cmake
+        echo 'set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
+        echo 'set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
+        echo 'set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)' >> toolchain.cmake
+        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)' >> toolchain.cmake
+        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)' >> toolchain.cmake
+        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' >> toolchain.cmake
 
-    - name: Configure and Build
-      run: |
-        rm -rf build
-        mkdir build
-        cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=../windows-toolchain.cmake -G "Unix Makefiles"
-        make
+    - name: Configure CMake
+      run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake
 
-    - name: Upload Windows executable
-      uses: actions/upload-artifact@v3
+    - name: Build
+      run: cmake --build build
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v2
       with:
         name: windows-executable
         path: build/*.exe
