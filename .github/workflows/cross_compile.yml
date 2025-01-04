@@ -1,40 +1,64 @@
 name: Cross-Compile for Windows
 
-on: [push, pull_request]
+on: 
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
 
 jobs:
   build:
     runs-on: ubuntu-latest
-
+    
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
-
+      uses: actions/checkout@v3  # Updated to v3
+      
     - name: Set up CMake
-      uses: lukka/get-cmake@v3
-
-    - name: Install MinGW
-      run: sudo apt-get install -y mingw-w64
-
+      uses: lukka/get-cmake@latest
+      
+    - name: Install MinGW and dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y mingw-w64 make
+        
     - name: Create toolchain file
       run: |
-        echo 'set(CMAKE_SYSTEM_NAME Windows)' > toolchain.cmake
-        echo 'set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)' >> toolchain.cmake
-        echo 'set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)' >> toolchain.cmake
-        echo 'set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)' >> toolchain.cmake
-        echo 'set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)' >> toolchain.cmake
-        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)' >> toolchain.cmake
-        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)' >> toolchain.cmake
-        echo 'set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)' >> toolchain.cmake
-
+        cat > toolchain.cmake << 'EOF'
+        set(CMAKE_SYSTEM_NAME Windows)
+        set(CMAKE_SYSTEM_PROCESSOR x86_64)
+        
+        # Specify the cross compilers
+        set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
+        set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+        set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
+        
+        # Set target environment path
+        set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
+        
+        # Search settings
+        set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+        
+        # Set Windows flags
+        set(CMAKE_C_FLAGS_INIT "-static-libgcc")
+        set(CMAKE_CXX_FLAGS_INIT "-static-libgcc -static-libstdc++")
+        EOF
+        
     - name: Configure CMake
-      run: cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake
-
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
+          -DCMAKE_BUILD_TYPE=Release
+          
     - name: Build
-      run: cmake --build build
-
+      run: cmake --build build --config Release
+      
     - name: Upload artifact
-      uses: actions/upload-artifact@v2
+      uses: actions/upload-artifact@v3  # Updated to v3
       with:
         name: windows-executable
-        path: build/*.exe
+        path: |
+          build/*.exe
+          build/*.dll
