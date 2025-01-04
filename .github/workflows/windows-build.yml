@@ -20,11 +20,11 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake mingw-w64 ninja-build make
-        mkdir build
+        sudo apt-get install -y cmake mingw-w64 ninja-build
 
     - name: Configure project with CMake
       run: |
+        mkdir build
         cd build
         cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake -G "Ninja"
 

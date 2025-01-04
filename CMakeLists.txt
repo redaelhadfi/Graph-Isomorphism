@@ -11,3 +11,5 @@ include_directories(${FLTK_INCLUDE_DIR})
 add_executable(GraphIsomorphism main.cpp graph_utils.cpp)
 
 target_link_libraries(GraphIsomorphism ${FLTK_LIBRARIES})
+
+cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake -G "Ninja"
