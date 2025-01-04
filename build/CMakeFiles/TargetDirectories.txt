@@ -1,3 +1,0 @@
-/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /build/CMakeFiles/GraphIsomorphism.dir
-/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /build/CMakeFiles/edit_cache.dir
-/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /build/CMakeFiles/rebuild_cache.dir
