@@ -11,8 +11,7 @@
 		"commands" : 
 		[
 			"add_executable",
-			"target_link_libraries",
-			"include_directories"
+			"target_link_libraries"
 		],
 		"files" : 
 		[
@@ -26,19 +25,13 @@
 			{
 				"command" : 0,
 				"file" : 0,
-				"line" : 37,
+				"line" : 35,
 				"parent" : 0
 			},
 			{
 				"command" : 1,
 				"file" : 0,
-				"line" : 40,
-				"parent" : 0
-			},
-			{
-				"command" : 2,
-				"file" : 0,
-				"line" : 31,
+				"line" : 38,
 				"parent" : 0
 			}
 		]
@@ -56,13 +49,6 @@
 			[
 				{
 					"path" : "/Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk/System/Library/Frameworks/OpenGL.framework"
-				}
-			],
-			"includes" : 
-			[
-				{
-					"backtrace" : 3,
-					"path" : "/Users/redaelhadfi/Desktop/freelance\ud83d\udcbc/Graph Isomorphism"
 				}
 			],
 			"language" : "CXX",

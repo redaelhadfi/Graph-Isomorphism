@@ -1,7 +1,7 @@
 [
 {
   "directory": "/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /build",
-  "command": "/Library/Developer/CommandLineTools/usr/bin/c++  -I\"/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism\" -F/Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk/System/Library/Frameworks -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/GraphIsomorphismChecker.dir/main.cpp.o -c \"/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /main.cpp\"",
+  "command": "/Library/Developer/CommandLineTools/usr/bin/c++  -F/Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk/System/Library/Frameworks -g -std=gnu++17 -arch arm64 -isysroot /Library/Developer/CommandLineTools/SDKs/MacOSX15.2.sdk -o CMakeFiles/GraphIsomorphismChecker.dir/main.cpp.o -c \"/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /main.cpp\"",
   "file": "/Users/redaelhadfi/Desktop/freelance💼/Graph Isomorphism /main.cpp",
   "output": "CMakeFiles/GraphIsomorphismChecker.dir/main.cpp.o"
 }

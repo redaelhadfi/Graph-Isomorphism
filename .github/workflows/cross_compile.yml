@@ -49,12 +49,10 @@ jobs:
           -DFLTK_BUILD_EXAMPLES=OFF
         make -j$(nproc)
         
-        # Create installation directory
+        # Install FLTK to MinGW directories
         sudo mkdir -p /usr/x86_64-w64-mingw32/include
         sudo mkdir -p /usr/x86_64-w64-mingw32/lib
-        
-        # Install FLTK to MinGW directories
-        sudo cp -r FL /usr/x86_64-w64-mingw32/include/
+        sudo cp -r ../FL /usr/x86_64-w64-mingw32/include/
         sudo cp lib/*.a /usr/x86_64-w64-mingw32/lib/
 
     - name: Create toolchain file

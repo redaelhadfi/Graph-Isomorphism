@@ -4,17 +4,21 @@ project(GraphIsomorphism)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-# Windows-specific settings
+# Detect Windows platform
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    # FLTK libraries for Windows
+    # Include FLTK directories for MinGW
+    include_directories(/usr/x86_64-w64-mingw32/include)
+    link_directories(/usr/x86_64-w64-mingw32/lib)
+    
+    # Specify FLTK libraries
     set(FLTK_LIBRARIES
         fltk
         fltk_forms
         fltk_images
         fltk_gl
     )
-    
-    # Windows system libraries needed by FLTK
+
+    # Additional system libraries for Windows
     list(APPEND FLTK_LIBRARIES
         gdi32
         ole32
@@ -27,19 +31,13 @@ else()
     find_package(FLTK REQUIRED)
 endif()
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR})
-if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
-    include_directories(/usr/x86_64-w64-mingw32/include)
-endif()
-
-# Add executable
+# Add executable target
 add_executable(GraphIsomorphismChecker main.cpp)
 
-# Link libraries
+# Link FLTK libraries
 target_link_libraries(GraphIsomorphismChecker ${FLTK_LIBRARIES})
 
-# Ensure static linking for Windows
+# Set static linking on Windows
 if(CMAKE_SYSTEM_NAME STREQUAL "Windows")
     set_target_properties(GraphIsomorphismChecker PROPERTIES
         LINK_FLAGS "-static -static-libgcc -static-libstdc++"
