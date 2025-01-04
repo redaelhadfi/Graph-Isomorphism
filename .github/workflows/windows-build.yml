@@ -20,14 +20,13 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake mingw-w64 g++-mingw-w64
-        sudo apt-get install -y libx11-dev libxext-dev libxft-dev  # FLTK dependencies
+        sudo apt-get install -y cmake mingw-w64 ninja-build make
+        mkdir build
 
     - name: Configure project with CMake
       run: |
-        mkdir build
         cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=/usr/share/mingw-w64/toolchain-x86_64.cmake -DCMAKE_SYSTEM_NAME=Windows
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake -G "Ninja"
 
     - name: Build project
       run: |
