@@ -20,18 +20,19 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake mingw-w64 make ninja-build
+        sudo apt-get install -y cmake mingw-w64 g++-mingw-w64
+        sudo apt-get install -y libx11-dev libxext-dev libxft-dev  # FLTK dependencies
 
     - name: Configure project with CMake
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake -G "Unix Makefiles"
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=/usr/share/mingw-w64/toolchain-x86_64.cmake -DCMAKE_SYSTEM_NAME=Windows
 
     - name: Build project
       run: |
         cd build
-        make
+        cmake --build . --config Release
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
