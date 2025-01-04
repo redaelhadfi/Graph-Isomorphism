@@ -1,32 +1,41 @@
-name: Windows Build
+name: Cross-Compile for Windows
 
 on:
   push:
     branches:
       - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   build:
-    runs-on: windows-latest
+    name: Cross-Compile to Windows
+    runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Source Code
+    - name: Checkout code
       uses: actions/checkout@v3
 
-    - name: Install Dependencies
+    - name: Install dependencies
       run: |
-        choco install cmake mingw
+        sudo apt-get update
+        sudo apt-get install -y cmake mingw-w64 g++-mingw-w64
+        sudo apt-get install -y libx11-dev libxext-dev libxft-dev  # FLTK dependencies
 
-    - name: Configure Build
+    - name: Configure project with CMake
       run: |
-        cmake -G "MinGW Makefiles" -DCMAKE_BUILD_TYPE=Release .
+        mkdir build
+        cd build
+        cmake .. -DCMAKE_TOOLCHAIN_FILE=/usr/share/mingw-w64/toolchain-x86_64.cmake -DCMAKE_SYSTEM_NAME=Windows
 
-    - name: Build Project
+    - name: Build project
       run: |
-        mingw32-make
+        cd build
+        cmake --build . --config Release
 
-    - name: Upload Executable
+    - name: Upload artifact
       uses: actions/upload-artifact@v3
       with:
         name: GraphIsomorphism
-        path: ./GraphIsomorphism.exe
+        path: build/GraphIsomorphism.exe

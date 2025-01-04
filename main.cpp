@@ -42,58 +42,75 @@ void draw() override {
 
     if (!graph || graph->numVertices == 0) return;
 
-    int radius = 20;  // Radius of vertices
+    int radius = 25;          // Radius of vertices
+    int selfLoopOffset = 35;  // Offset for self-loop arcs
+    int edgeWeightRadius = 15; // Radius for edge weight background
     int centerX = x() + w() / 2, centerY = y() + h() / 2;
     int vertices = graph->numVertices;
     double angleStep = 2 * M_PI / vertices;
 
-    // Draw edges with weights
+    // Draw edges and self-loops
     for (int i = 0; i < vertices; ++i) {
         int vx = centerX + std::cos(i * angleStep) * (w() / 3);
         int vy = centerY + std::sin(i * angleStep) * (h() / 3);
 
-        for (int j = i + 1; j < vertices; ++j) {  // Avoid duplicating edges
+        for (int j = 0; j < vertices; ++j) {
             int weight = graph->adjacencyMatrix[i][j];
-            if (weight > 0) {  // Only draw edges with positive weights
-                int wx = centerX + std::cos(j * angleStep) * (w() / 3);
-                int wy = centerY + std::sin(j * angleStep) * (h() / 3);
+            if (weight > 0) {
+                if (i == j) {
+                    // Self-loop: Draw as an arc
+                    fl_color(fl_rgb_color(255, 100, 100)); // Modern red
+                    fl_arc(vx - selfLoopOffset, vy - selfLoopOffset, selfLoopOffset * 2, selfLoopOffset * 2, 0, 300);
 
-                // Set edge color based on weight
-                fl_color(FL_BLUE);
-                if (weight > 5) fl_color(FL_RED);  // Highlight heavier edges
+                    // Self-loop weight
+                    fl_color(fl_rgb_color(255, 255, 255)); // White weight text
+                    fl_draw(std::to_string(weight).c_str(), vx + selfLoopOffset, vy - selfLoopOffset - 5);
+                } else if (i < j) {  // Avoid duplicate edges
+                    int wx = centerX + std::cos(j * angleStep) * (w() / 3);
+                    int wy = centerY + std::sin(j * angleStep) * (h() / 3);
 
-                // Draw edge line
-                fl_line(vx, vy, wx, wy);
+                    // Draw edge with variable thickness
+                    fl_color(fl_rgb_color(100, 200, 255)); // Light blue
+                    fl_line_style(FL_SOLID, std::min(3 + weight, 7)); // Thickness based on weight
+                    fl_line(vx, vy, wx, wy);
 
-                // Draw weight at midpoint with a background circle
-                int mx = (vx + wx) / 2;
-                int my = (vy + wy) / 2;
-                fl_color(FL_BLACK);
-                fl_pie(mx - 10, my - 10, 20, 20, 0, 360);  // Background circle for weight
-                fl_color(FL_WHITE);
-                fl_draw(std::to_string(weight).c_str(), mx - 5, my + 5);
+                    // Edge weight at midpoint
+                    int mx = (vx + wx) / 2;
+                    int my = (vy + wy) / 2;
+                    fl_color(fl_rgb_color(50, 50, 50)); // Dark background
+                    fl_pie(mx - edgeWeightRadius, my - edgeWeightRadius, edgeWeightRadius * 2, edgeWeightRadius * 2, 0, 360);
+                    fl_color(fl_rgb_color(255, 255, 255)); // White text
+                    fl_draw(std::to_string(weight).c_str(), mx - 8, my + 5);
+                }
             }
         }
     }
 
-    // Draw vertices with labels
+    // Draw vertices
     for (int i = 0; i < vertices; ++i) {
         int vx = centerX + std::cos(i * angleStep) * (w() / 3);
         int vy = centerY + std::sin(i * angleStep) * (h() / 3);
 
-        // Draw vertex background
-        fl_color(FL_DARK_GREEN);
-        fl_pie(vx - radius - 2, vy - radius - 2, (radius + 2) * 2, (radius + 2) * 2, 0, 360);
+        // Shadow
+        fl_color(fl_rgb_color(50, 50, 50)); // Dark gray
+        fl_pie(vx - radius - 5, vy - radius - 5, (radius + 5) * 2, (radius + 5) * 2, 0, 360);
 
-        // Draw vertex circle
-        fl_color(FL_GREEN);
+        // Border
+        fl_color(fl_rgb_color(80, 200, 120)); // Modern green
         fl_pie(vx - radius, vy - radius, radius * 2, radius * 2, 0, 360);
 
-        // Draw vertex label
-        fl_color(FL_WHITE);
-        fl_draw(std::to_string(i + 1).c_str(), vx - 5, vy + 5);
+        // Label background
+        fl_color(fl_rgb_color(255, 255, 255)); // White
+        fl_pie(vx - radius + 5, vy - radius + 5, (radius - 5) * 2, (radius - 5) * 2, 0, 360);
+
+        // Vertex label
+        fl_color(fl_rgb_color(0, 0, 0)); // Black text
+        fl_draw(std::to_string(i + 1).c_str(), vx - 8, vy + 5);
     }
+
+    fl_line_style(0); // Reset line style
 }
+
 
 };
 
@@ -148,6 +165,16 @@ public:
 void createMatrix(int size) {
     int xOffset = 50, yOffset = 70, inputWidth = 40, spacing = 50;
 
+    // Clear existing inputs
+    for (auto& row : matrixInputs) {
+        for (auto& input : row) {
+            remove(input);
+            delete input;
+        }
+    }
+    matrixInputs.clear();
+
+    // Resize and populate new inputs
     matrixInputs.resize(size);
     for (int i = 0; i < size; ++i) {
         matrixInputs[i].resize(size);
@@ -155,15 +182,16 @@ void createMatrix(int size) {
             Fl_Input* input = new Fl_Input(
                 xOffset + j * spacing, yOffset + i * spacing, inputWidth, inputWidth
             );
-            input->value("0");  // Default weight is 0 (no edge)
-            matrixInputs[i][j] = input;
-
-            if (i == j) {
-                input->deactivate();  // Disable self-loops
+            if (i < targetGraph->numVertices && j < targetGraph->numVertices) {
+                input->value(std::to_string(targetGraph->adjacencyMatrix[i][j]).c_str());
+            } else {
+                input->value("0");
             }
+            matrixInputs[i][j] = input;
         }
     }
 }
+
 
 void createGraph() {
     int size = static_cast<int>(vertexSpinner->value());
@@ -187,15 +215,29 @@ void createGraph() {
     hide();
 }
 
+
 };
 
 void clearResults(Fl_Widget*, void*) {
-    graph1 = {};
-    graph2 = {};
+    // Reset the graph structures
+    graph1.numVertices = 0;
+    graph1.adjacencyMatrix.clear();
+    graph2.numVertices = 0;
+    graph2.adjacencyMatrix.clear();
+
+    // Clear the graph widgets
     graph1Widget->setGraph(nullptr);
+    graph1Widget->redraw();
     graph2Widget->setGraph(nullptr);
+    graph2Widget->redraw();
+
+    // Clear the text buffer
     textBuffer->text("");
+
+    // Optional: Log the reset action
+    textBuffer->append("Graphs and UI cleared successfully.\n");
 }
+
 
 void inputGraph1(Fl_Widget*, void*) {
     InputDialog* dialog = new InputDialog(&graph1, graph1Widget, "Input Graph 1");
@@ -218,31 +260,83 @@ void checkIsomorphism(Fl_Widget*, void*) {
 bool result = areGraphsIsomorphic(static_cast<const Graph&>(graph1), static_cast<const Graph&>(graph2));
     textBuffer->append(result ? "Graphs are isomorphic.\n" : "Graphs are NOT isomorphic.\n");
 }
-
 int main() {
     textBuffer = new Fl_Text_Buffer();
 
-    Fl_Window* window = new Fl_Window(1200, 750, "Graph Isomorphism Checker");
-    window->color(FL_DARK3);
+    Fl_Window* window = new Fl_Window(1200, 800, "Graph Isomorphism Checker");
+    window->color(fl_rgb_color(240, 240, 240)); // Light gray background
 
-    Fl_Button* inputGraph1Button = new Fl_Button(50, 30, 200, 40, "Input Graph 1");
+    // Title Label
+    Fl_Box* titleLabel = new Fl_Box(0, 10, 1200, 40, "Graph Isomorphism Checker");
+    titleLabel->labelsize(24);
+    titleLabel->labelfont(FL_BOLD);
+    titleLabel->align(FL_ALIGN_CENTER);
+
+    // Buttons Section
+    Fl_Group* buttonGroup = new Fl_Group(50, 60, 250, 200, "Controls");
+    buttonGroup->box(FL_ENGRAVED_BOX);
+    buttonGroup->color(fl_rgb_color(220, 250, 220)); // Light gray
+    buttonGroup->align(FL_ALIGN_TOP_LEFT);
+
+    Fl_Button* inputGraph1Button = new Fl_Button(60, 80, 200, 30, "Input Graph 1");
+    inputGraph1Button->color(fl_rgb_color(100, 200, 255)); // Light blue
+    inputGraph1Button->labelcolor(FL_WHITE);
+    inputGraph1Button->labelfont(FL_BOLD);
     inputGraph1Button->callback(inputGraph1);
 
-    Fl_Button* inputGraph2Button = new Fl_Button(50, 90, 200, 40, "Input Graph 2");
+    Fl_Button* inputGraph2Button = new Fl_Button(60, 130, 200, 30, "Input Graph 2");
+    inputGraph2Button->color(fl_rgb_color(100, 200, 255));
+    inputGraph2Button->labelcolor(FL_WHITE);
+    inputGraph2Button->labelfont(FL_BOLD);
     inputGraph2Button->callback(inputGraph2);
 
-    Fl_Button* checkButton = new Fl_Button(50, 150, 200, 40, "Check Isomorphism");
+    Fl_Button* checkButton = new Fl_Button(60, 180, 200, 30, "Check Isomorphism");
+    checkButton->color(fl_rgb_color(50, 150, 50)); // Green
+    checkButton->labelcolor(FL_WHITE);
+    checkButton->labelfont(FL_BOLD);
     checkButton->callback(checkIsomorphism);
 
-    Fl_Button* clearButton = new Fl_Button(50, 210, 200, 40, "Clear");
+    Fl_Button* clearButton = new Fl_Button(60, 220, 200, 30, "Clear");
+    clearButton->color(fl_rgb_color(200, 50, 50)); // Red
+    clearButton->labelcolor(FL_WHITE);
+    clearButton->labelfont(FL_BOLD);
     clearButton->callback(clearResults);
 
-    Fl_Text_Display* textDisplay = new Fl_Text_Display(300, 30, 850, 200);
+    buttonGroup->end();
+
+    // Text Display Section
+    Fl_Group* textGroup = new Fl_Group(320, 60, 850, 200, "Console Output");
+    textGroup->box(FL_ENGRAVED_BOX);
+    textGroup->color(fl_rgb_color(220, 220, 220)); // Light gray
+    textGroup->align(FL_ALIGN_TOP_LEFT);
+
+    Fl_Text_Display* textDisplay = new Fl_Text_Display(330, 90, 830, 160);
     textDisplay->buffer(textBuffer);
+    textDisplay->box(FL_DOWN_BOX);
+    textDisplay->color(FL_BLACK);
+    textDisplay->textcolor(FL_WHITE);
+    textDisplay->textfont(FL_COURIER);
+    textDisplay->textsize(14);
 
-    graph1Widget = new GraphWidget(50, 300, 500, 400, "Graph 1");
-    graph2Widget = new GraphWidget(650, 300, 500, 400, "Graph 2");
+    textGroup->end();
 
+    // Graph Widgets Section
+    Fl_Group* graphGroup = new Fl_Group(50, 280, 1100, 450, "Graph Visualization");
+    graphGroup->box(FL_ENGRAVED_BOX);
+    graphGroup->color(fl_rgb_color(220, 220, 220));
+    graphGroup->align(FL_ALIGN_TOP_LEFT);
+
+    graph1Widget = new GraphWidget(60, 300, 500, 400, "Graph 1");
+    graph1Widget->box(FL_ENGRAVED_BOX);
+    graph1Widget->color(fl_rgb_color(240, 240, 240));
+
+    graph2Widget = new GraphWidget(640, 300, 500, 400, "Graph 2");
+    graph2Widget->box(FL_ENGRAVED_BOX);
+    graph2Widget->color(fl_rgb_color(240, 240, 240));
+
+    graphGroup->end();
+
+    // Show the window
     window->end();
     window->show();
     return Fl::run();
