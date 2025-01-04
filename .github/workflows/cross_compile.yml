@@ -12,7 +12,6 @@ jobs:
     
     steps:
     - name: Checkout code
-<<<<<<< HEAD
       uses: actions/checkout@v3
       
     - name: Install dependencies
@@ -58,52 +57,21 @@ jobs:
         sudo cp -r FL /usr/x86_64-w64-mingw32/include/
         sudo cp lib/*.a /usr/x86_64-w64-mingw32/lib/
 
-=======
-      uses: actions/checkout@v3  # Updated to v3
-      
-    - name: Set up CMake
-      uses: lukka/get-cmake@latest
-      
-    - name: Install MinGW and dependencies
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y mingw-w64 make
-        
->>>>>>> 33f25724df36b234be3b98402ca15779d3a2cfa6
     - name: Create toolchain file
       run: |
         cat > toolchain.cmake << 'EOF'
         set(CMAKE_SYSTEM_NAME Windows)
         set(CMAKE_SYSTEM_PROCESSOR x86_64)
-<<<<<<< HEAD
         set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
         set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
         set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
         set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
-=======
-        
-        # Specify the cross compilers
-        set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
-        set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
-        set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
-        
-        # Set target environment path
-        set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
-        
-        # Search settings
->>>>>>> 33f25724df36b234be3b98402ca15779d3a2cfa6
         set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
         set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
         set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
         
-<<<<<<< HEAD
         # FLTK specific flags
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
-=======
-        # Set Windows flags
-        set(CMAKE_C_FLAGS_INIT "-static-libgcc")
-        set(CMAKE_CXX_FLAGS_INIT "-static-libgcc -static-libstdc++")
->>>>>>> 33f25724df36b234be3b98402ca15779d3a2cfa6
         EOF
         
     - name: Configure CMake
@@ -116,13 +84,7 @@ jobs:
       run: cmake --build build --config Release
       
     - name: Upload artifact
-<<<<<<< HEAD
       uses: actions/upload-artifact@v3
-=======
-      uses: actions/upload-artifact@v3  # Updated to v3
->>>>>>> 33f25724df36b234be3b98402ca15779d3a2cfa6
       with:
         name: windows-executable
-        path: |
-          build/*.exe
-          build/*.dll
+        path: build/*.exe
