@@ -1,0 +1,60 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"jsonFile" : "directory-.-Debug-f5ebdc15457944623624.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.10"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "GraphIsomorphism",
+					"targetIndexes" : 
+					[
+						0
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "GraphIsomorphismChecker::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-GraphIsomorphismChecker-Debug-df373df767873f0c6997.json",
+					"name" : "GraphIsomorphismChecker",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/Users/redaelhadfi/Desktop/freelance\ud83d\udcbc/Graph Isomorphism /build",
+		"source" : "/Users/redaelhadfi/Desktop/freelance\ud83d\udcbc/Graph Isomorphism "
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 6
+	}
+}
