@@ -71,19 +71,11 @@ jobs:
         # FLTK specific flags
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
         EOF
+
     - name: Clean previous build directory
       run: |
         rm -rf build
         mkdir build
-
-    - name: Configure CMake
-      run: |
-        cmake -S . -B build \
-          -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
-          -DCMAKE_BUILD_TYPE=Release
-          
-    - name: Build
-      run: cmake --build build --config Release
 
     - name: Configure CMake
       run: |
