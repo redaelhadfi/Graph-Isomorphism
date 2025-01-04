@@ -26,12 +26,12 @@ jobs:
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
+        cmake .. -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++ -G "MinGW Makefiles"
 
     - name: Build project
       run: |
         cd build
-        make
+        mingw32-make
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
