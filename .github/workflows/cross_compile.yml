@@ -21,40 +21,46 @@ jobs:
 
     - name: Download and build FLTK for MinGW
       run: |
-        wget https://www.fltk.org/pub/fltk/1.3.8/fltk-1.3.8-source.tar.gz
-        tar xf fltk-1.3.8-source.tar.gz
-        cd fltk-1.3.8
-        
-        # Create MinGW toolchain file for FLTK
-        cat > mingw-toolchain.cmake << 'EOF'
-        set(CMAKE_SYSTEM_NAME Windows)
-        set(CMAKE_SYSTEM_PROCESSOR x86_64)
-        set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
-        set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
-        set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
-        set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
-        set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
-        set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
-        set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
-        EOF
-        
-        # Build FLTK with MinGW
-        mkdir build-mingw
-        cd build-mingw
-        cmake .. \
-          -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake \
-          -DCMAKE_BUILD_TYPE=Release \
-          -DOPTION_BUILD_SHARED_LIBS=OFF \
-          -DFLTK_BUILD_TEST=OFF \
-          -DFLTK_BUILD_EXAMPLES=OFF
-        make -j$(nproc)
-        
-        # Install FLTK to MinGW directories
-        sudo mkdir -p /usr/x86_64-w64-mingw32/include
-        sudo mkdir -p /usr/x86_64-w64-mingw32/lib
-        sudo cp -r ../FL /usr/x86_64-w64-mingw32/include/
-        sudo cp lib/*.a /usr/x86_64-w64-mingw32/lib/
-
+          wget https://www.fltk.org/pub/fltk/1.3.8/fltk-1.3.8-source.tar.gz
+          tar xf fltk-1.3.8-source.tar.gz
+          cd fltk-1.3.8
+          
+          # Create MinGW toolchain file for FLTK
+          cat > mingw-toolchain.cmake << 'EOF'
+          set(CMAKE_SYSTEM_NAME Windows)
+          set(CMAKE_SYSTEM_PROCESSOR x86_64)
+          set(CMAKE_C_COMPILER x86_64-w64-mingw32-gcc)
+          set(CMAKE_CXX_COMPILER x86_64-w64-mingw32-g++)
+          set(CMAKE_RC_COMPILER x86_64-w64-mingw32-windres)
+          set(CMAKE_FIND_ROOT_PATH /usr/x86_64-w64-mingw32)
+          set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+          set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+          set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+          EOF
+          
+          # Build FLTK with MinGW
+          mkdir build-mingw
+          cd build-mingw
+          cmake .. \
+            -DCMAKE_TOOLCHAIN_FILE=../mingw-toolchain.cmake \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DOPTION_BUILD_SHARED_LIBS=OFF \
+            -DFLTK_BUILD_TEST=OFF \
+            -DFLTK_BUILD_EXAMPLES=OFF
+          make -j$(nproc)
+          
+          # Install FLTK to MinGW directories
+          sudo mkdir -p /usr/x86_64-w64-mingw32/include
+          sudo mkdir -p /usr/x86_64-w64-mingw32/lib
+          
+          # Copy headers, including `abi-version.h`
+          sudo cp -r ../FL /usr/x86_64-w64-mingw32/include/
+          sudo cp -r ../FL/abi-version.h /usr/x86_64-w64-mingw32/include/FL/
+          sudo cp lib/*.a /usr/x86_64-w64-mingw32/lib/
+    - name: Verify FLTK installation
+      run: |
+            ls -l /usr/x86_64-w64-mingw32/include/FL/
+      
     - name: Create toolchain file
       run: |
         cat > toolchain.cmake << 'EOF'
@@ -71,11 +77,19 @@ jobs:
         # FLTK specific flags
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -static-libgcc -static-libstdc++")
         EOF
-
     - name: Clean previous build directory
       run: |
         rm -rf build
         mkdir build
+
+    - name: Configure CMake
+      run: |
+        cmake -S . -B build \
+          -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake \
+          -DCMAKE_BUILD_TYPE=Release
+          
+    - name: Build
+      run: cmake --build build --config Release
 
     - name: Configure CMake
       run: |
