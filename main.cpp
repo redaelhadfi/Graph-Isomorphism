@@ -1,21 +1,32 @@
-#define _USE_MATH_DEFINES // For M_PI
-#include <cmath>          // For cos, sin, and M_PI
+#define _USE_MATH_DEFINES
+#include <cmath>
 #include <FL/Fl.H>
 #include <FL/Fl_Window.H>
 #include <FL/Fl_Button.H>
-#include <FL/Fl_File_Chooser.H>
 #include <FL/Fl_Text_Display.H>
 #include <FL/Fl_Box.H>
-#include "graph_utils.h"
+#include <FL/Fl_Spinner.H>
+#include <FL/Fl_Input.H>
+#include <vector>
 #include <iostream>
 #include <sstream>
-#include <chrono>
+#include <algorithm>
+#include <stdexcept>
+#include "graph_utils.h"
+
+#include "graph_utils.h"  // Include the Graph structure and function declaration
+
+// Function declaration
+bool areGraphsIsomorphic(const Graph& g1, const Graph& g2);
+
+// Graph structure
+
 
 // Global variables
-Graph graph1, graph2;
-Fl_Text_Buffer* textBuffer = new Fl_Text_Buffer();
+Graph graph1;
+Graph graph2;
+Fl_Text_Buffer* textBuffer;
 
-// Custom Widget for Graph Visualization
 class GraphWidget : public Fl_Box {
     const Graph* graph;
 
@@ -25,142 +36,213 @@ public:
 
     void setGraph(const Graph* g) {
         graph = g;
-        redraw(); // Trigger a redraw when a new graph is set
+        redraw();
     }
+void draw() override {
+    Fl_Box::draw();
 
-    void draw() override {
-        Fl_Box::draw(); // Draw the default box
+    if (!graph || graph->numVertices == 0) return;
 
-        if (!graph || graph->numVertices == 0) return;
+    int radius = 20;  // Radius of vertices
+    int centerX = x() + w() / 2, centerY = y() + h() / 2;
+    int vertices = graph->numVertices;
+    double angleStep = 2 * M_PI / vertices;
 
-        int radius = 20; // Vertex radius
-        int centerX = x() + w() / 2, centerY = y() + h() / 2;
-        int vertices = graph->numVertices;
-        double angleStep = 2 * M_PI / vertices;
+    // Draw edges with weights
+    for (int i = 0; i < vertices; ++i) {
+        int vx = centerX + std::cos(i * angleStep) * (w() / 3);
+        int vy = centerY + std::sin(i * angleStep) * (h() / 3);
 
-        // Draw edges and vertices
-        for (int i = 0; i < vertices; ++i) {
-            int vx = centerX + std::cos(i * angleStep) * (w() / 3);
-            int vy = centerY + std::sin(i * angleStep) * (h() / 3);
+        for (int j = i + 1; j < vertices; ++j) {  // Avoid duplicating edges
+            int weight = graph->adjacencyMatrix[i][j];
+            if (weight > 0) {  // Only draw edges with positive weights
+                int wx = centerX + std::cos(j * angleStep) * (w() / 3);
+                int wy = centerY + std::sin(j * angleStep) * (h() / 3);
 
-            // Draw edges
-            for (int j = 0; j < vertices; ++j) {
-                if (graph->adjacencyMatrix[i][j] == 1) {
-                    int wx = centerX + std::cos(j * angleStep) * (w() / 3);
-                    int wy = centerY + std::sin(j * angleStep) * (h() / 3);
-                    fl_color(FL_BLUE);
-                    fl_line(vx, vy, wx, wy);
-                }
+                // Set edge color based on weight
+                fl_color(FL_BLUE);
+                if (weight > 5) fl_color(FL_RED);  // Highlight heavier edges
+
+                // Draw edge line
+                fl_line(vx, vy, wx, wy);
+
+                // Draw weight at midpoint with a background circle
+                int mx = (vx + wx) / 2;
+                int my = (vy + wy) / 2;
+                fl_color(FL_BLACK);
+                fl_pie(mx - 10, my - 10, 20, 20, 0, 360);  // Background circle for weight
+                fl_color(FL_WHITE);
+                fl_draw(std::to_string(weight).c_str(), mx - 5, my + 5);
             }
-
-            // Draw vertices
-            fl_color(FL_GREEN);
-            fl_pie(vx - radius, vy - radius, radius * 2, radius * 2, 0, 360);
-            fl_color(FL_WHITE);
-            fl_draw(std::to_string(i + 1).c_str(), vx - 5, vy + 5);
         }
     }
+
+    // Draw vertices with labels
+    for (int i = 0; i < vertices; ++i) {
+        int vx = centerX + std::cos(i * angleStep) * (w() / 3);
+        int vy = centerY + std::sin(i * angleStep) * (h() / 3);
+
+        // Draw vertex background
+        fl_color(FL_DARK_GREEN);
+        fl_pie(vx - radius - 2, vy - radius - 2, (radius + 2) * 2, (radius + 2) * 2, 0, 360);
+
+        // Draw vertex circle
+        fl_color(FL_GREEN);
+        fl_pie(vx - radius, vy - radius, radius * 2, radius * 2, 0, 360);
+
+        // Draw vertex label
+        fl_color(FL_WHITE);
+        fl_draw(std::to_string(i + 1).c_str(), vx - 5, vy + 5);
+    }
+}
+
 };
 
-// Graph Widgets
 GraphWidget* graph1Widget;
 GraphWidget* graph2Widget;
 
-// Clear Results
-void clearResults(Fl_Widget* w, void* p) {
+class InputDialog : public Fl_Window {
+    Graph* targetGraph;
+    GraphWidget* targetWidget;
+    std::vector<std::vector<Fl_Input*>> matrixInputs;
+    Fl_Spinner* vertexSpinner;
+
+public:
+    InputDialog(Graph* graph, GraphWidget* widget, const char* title)
+        : Fl_Window(700, 600, title), targetGraph(graph), targetWidget(widget) {
+        vertexSpinner = new Fl_Spinner(150, 20, 60, 25, "Vertices:");
+        vertexSpinner->minimum(1);
+        vertexSpinner->maximum(10);
+        vertexSpinner->value(graph->numVertices > 0 ? graph->numVertices : 1);
+        vertexSpinner->callback(spinner_callback, this);
+
+        createMatrix(static_cast<int>(vertexSpinner->value()));
+
+        Fl_Button* createButton = new Fl_Button(250, 500, 100, 30, "Create Graph");
+        createButton->callback(create_callback, this);
+
+        this->end();
+    }
+
+    static void spinner_callback(Fl_Widget*, void* v) {
+        InputDialog* dialog = (InputDialog*)v;
+        dialog->recreateMatrix();
+    }
+
+    static void create_callback(Fl_Widget*, void* v) {
+        InputDialog* dialog = (InputDialog*)v;
+        dialog->createGraph();
+    }
+
+    void recreateMatrix() {
+        for (auto& row : matrixInputs) {
+            for (auto& input : row) {
+                remove(input);
+                delete input;
+            }
+        }
+        matrixInputs.clear();
+        createMatrix(static_cast<int>(vertexSpinner->value()));
+        this->redraw();
+    }
+
+void createMatrix(int size) {
+    int xOffset = 50, yOffset = 70, inputWidth = 40, spacing = 50;
+
+    matrixInputs.resize(size);
+    for (int i = 0; i < size; ++i) {
+        matrixInputs[i].resize(size);
+        for (int j = 0; j < size; ++j) {
+            Fl_Input* input = new Fl_Input(
+                xOffset + j * spacing, yOffset + i * spacing, inputWidth, inputWidth
+            );
+            input->value("0");  // Default weight is 0 (no edge)
+            matrixInputs[i][j] = input;
+
+            if (i == j) {
+                input->deactivate();  // Disable self-loops
+            }
+        }
+    }
+}
+
+void createGraph() {
+    int size = static_cast<int>(vertexSpinner->value());
+    targetGraph->numVertices = size;
+    targetGraph->adjacencyMatrix.resize(size, std::vector<int>(size, 0));
+
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j) {
+            try {
+                int weight = std::stoi(matrixInputs[i][j]->value());
+                if (weight < 0) throw std::runtime_error("Invalid weight.");
+                targetGraph->adjacencyMatrix[i][j] = weight;
+            } catch (...) {
+                textBuffer->append("Error: Invalid input in adjacency matrix.\n");
+                return;
+            }
+        }
+    }
+
+    targetWidget->setGraph(targetGraph);
+    hide();
+}
+
+};
+
+void clearResults(Fl_Widget*, void*) {
     graph1 = {};
     graph2 = {};
     graph1Widget->setGraph(nullptr);
     graph2Widget->setGraph(nullptr);
-    textBuffer->text(""); // Clear the results display
+    textBuffer->text("");
 }
 
-// Load Graph 1
-void loadGraph1(Fl_Widget* w, void* p) {
-    const char* file = fl_file_chooser("Load Graph 1", "*.txt", "");
-    if (file) {
-        try {
-            graph1 = loadGraphFromFile(file);
-            graph1Widget->setGraph(&graph1); // Update visualization
-            textBuffer->append("Graph 1 loaded successfully.\n");
-        } catch (const std::exception& e) {
-            textBuffer->append(("Error: " + std::string(e.what()) + "\n").c_str());
-        }
-    }
+void inputGraph1(Fl_Widget*, void*) {
+    InputDialog* dialog = new InputDialog(&graph1, graph1Widget, "Input Graph 1");
+    dialog->show();
 }
 
-// Load Graph 2
-void loadGraph2(Fl_Widget* w, void* p) {
-    const char* file = fl_file_chooser("Load Graph 2", "*.txt", "");
-    if (file) {
-        try {
-            graph2 = loadGraphFromFile(file);
-            graph2Widget->setGraph(&graph2); // Update visualization
-            textBuffer->append("Graph 2 loaded successfully.\n");
-        } catch (const std::exception& e) {
-            textBuffer->append(("Error: " + std::string(e.what()) + "\n").c_str());
-        }
-    }
+void inputGraph2(Fl_Widget*, void*) {
+    InputDialog* dialog = new InputDialog(&graph2, graph2Widget, "Input Graph 2");
+    dialog->show();
 }
 
-// Check Isomorphism
-void checkIsomorphism(Fl_Widget* w, void* p) {
+
+
+void checkIsomorphism(Fl_Widget*, void*) {
     if (graph1.numVertices == 0 || graph2.numVertices == 0) {
-        textBuffer->append("Error: Please load both graphs before checking isomorphism.\n");
+        textBuffer->append("Error: Create both graphs first.\n");
         return;
     }
 
-    auto start = std::chrono::high_resolution_clock::now();
-    bool result = areGraphsIsomorphic(graph1, graph2);
-    auto end = std::chrono::high_resolution_clock::now();
-    std::chrono::duration<double> elapsed = end - start;
-
-    std::ostringstream oss;
-    oss << (result ? "The graphs are isomorphic.\n" : "The graphs are NOT isomorphic.\n");
-    oss << "Execution time: " << elapsed.count() << " seconds.\n";
-    textBuffer->append(oss.str().c_str());
+bool result = areGraphsIsomorphic(static_cast<const Graph&>(graph1), static_cast<const Graph&>(graph2));
+    textBuffer->append(result ? "Graphs are isomorphic.\n" : "Graphs are NOT isomorphic.\n");
 }
 
-// Main Application
 int main() {
+    textBuffer = new Fl_Text_Buffer();
+
     Fl_Window* window = new Fl_Window(1200, 750, "Graph Isomorphism Checker");
-    window->color(FL_DARK3); // Background color
+    window->color(FL_DARK3);
 
-    // Buttons
-    Fl_Button* loadGraph1Button = new Fl_Button(50, 30, 200, 40, "Load Graph 1");
-    loadGraph1Button->color(FL_GREEN);
-    loadGraph1Button->labelcolor(FL_WHITE);
-    loadGraph1Button->callback(loadGraph1);
+    Fl_Button* inputGraph1Button = new Fl_Button(50, 30, 200, 40, "Input Graph 1");
+    inputGraph1Button->callback(inputGraph1);
 
-    Fl_Button* loadGraph2Button = new Fl_Button(50, 90, 200, 40, "Load Graph 2");
-    loadGraph2Button->color(FL_GREEN);
-    loadGraph2Button->labelcolor(FL_WHITE);
-    loadGraph2Button->callback(loadGraph2);
+    Fl_Button* inputGraph2Button = new Fl_Button(50, 90, 200, 40, "Input Graph 2");
+    inputGraph2Button->callback(inputGraph2);
 
     Fl_Button* checkButton = new Fl_Button(50, 150, 200, 40, "Check Isomorphism");
-    checkButton->color(FL_BLUE);
-    checkButton->labelcolor(FL_WHITE);
     checkButton->callback(checkIsomorphism);
 
     Fl_Button* clearButton = new Fl_Button(50, 210, 200, 40, "Clear");
-    clearButton->color(FL_RED);
-    clearButton->labelcolor(FL_WHITE);
     clearButton->callback(clearResults);
 
-    // Results Display
     Fl_Text_Display* textDisplay = new Fl_Text_Display(300, 30, 850, 200);
     textDisplay->buffer(textBuffer);
-    textDisplay->color(FL_BLACK);
-    textDisplay->textcolor(FL_WHITE);
 
-    // Graph Visualization Widgets
     graph1Widget = new GraphWidget(50, 300, 500, 400, "Graph 1");
-    graph1Widget->box(FL_BORDER_BOX);
-    graph1Widget->color(FL_GRAY);
-
     graph2Widget = new GraphWidget(650, 300, 500, 400, "Graph 2");
-    graph2Widget->box(FL_BORDER_BOX);
-    graph2Widget->color(FL_GRAY);
 
     window->end();
     window->show();
