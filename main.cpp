@@ -14,7 +14,6 @@
 #include <stdexcept>
 #include "graph_utils.h"
 
-#include "graph_utils.h"  // Include the Graph structure and function declaration
 
 // Function declaration
 bool areGraphsIsomorphic(const Graph& g1, const Graph& g2);
