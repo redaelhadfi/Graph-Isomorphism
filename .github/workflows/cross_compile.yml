@@ -20,18 +20,18 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y cmake mingw-w64 g++-mingw-w64
+        sudo apt-get install -y cmake mingw-w64 make
 
     - name: Configure project with CMake
       run: |
         mkdir build
         cd build
-        cmake .. -DCMAKE_TOOLCHAIN_FILE=/usr/share/mingw-w64/toolchain-x86_64.cmake -DCMAKE_SYSTEM_NAME=Windows
+        cmake .. -DCMAKE_SYSTEM_NAME=Windows -DCMAKE_C_COMPILER=x86_64-w64-mingw32-gcc -DCMAKE_CXX_COMPILER=x86_64-w64-mingw32-g++
 
     - name: Build project
       run: |
         cd build
-        cmake --build . --config Release
+        make
 
     - name: Upload artifact
       uses: actions/upload-artifact@v3
